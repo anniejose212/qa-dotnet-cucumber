@@ -6,19 +6,21 @@ using qa_dotnet_cucumber.Pages;
 namespace qa_dotnet_cucumber.StepDefinitions
 {
     [Binding]
-    public class LoginTestSteps
+    public class LoginSteps
     {
         private readonly LoginPage _loginPage;
+        private readonly NavigationHelper _navigationHelper;
 
-        public LoginTestSteps(IWebDriver driver)
+        public LoginSteps(LoginPage loginPage, NavigationHelper navigationHelper)
         {
-            _loginPage = new LoginPage(driver);
+            _loginPage = loginPage;
+            _navigationHelper = navigationHelper;
         }
 
         [Given("I am on the login page")]
         public void GivenIAmOnTheLoginPage()
         {
-            _loginPage.NavigateTo();
+            _navigationHelper.NavigateTo("/login");
             Assert.That(_loginPage.IsAtLoginPage(), Is.True, "Should be on the login page");
         }
 
