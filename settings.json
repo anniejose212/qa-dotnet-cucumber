@@ -5,7 +5,7 @@
     "TimeoutSeconds": 30
   },
   "Report": {
-    "Path": "/Users/danielchoi/Documents/MVP Studio/qa-dotnet-cucumber/TestReport.html",
+    "Path": "TestReport.html",
     "Title": "Test Automation Report"
   },
   "Environment": {

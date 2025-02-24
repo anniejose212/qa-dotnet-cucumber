@@ -1,0 +1,9 @@
+{
+  "stepAssemblies": [],
+  "execution": {
+    "parallelExecution": {
+      "enabled": true,
+      "maxParallelThreads": 0
+     }
+  }
+}
