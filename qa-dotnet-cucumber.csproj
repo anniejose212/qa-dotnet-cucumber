@@ -44,4 +44,8 @@
     <Using Include="NUnit.Framework" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Features\Features\" />
+  </ItemGroup>
+
 </Project>

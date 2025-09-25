@@ -9,6 +9,6 @@
     "Title": "Test Automation Report"
   },
   "Environment": {
-    "BaseUrl": "http://the-internet.herokuapp.com"
+    "BaseUrl": "http://localhost:5003"
   }
 }
