@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Configuration;
+
 namespace qa_dotnet_cucumber.Config
 {
     public class TestSettings
@@ -5,8 +7,11 @@ namespace qa_dotnet_cucumber.Config
         public BrowserSettings Browser { get; set; }
         public ReportSettings Report { get; set; }
         public EnvironmentSettings Environment { get; set; }
-    }
 
+        public LoginSettings Login { get; set; }
+        
+    }
+    
     public class BrowserSettings
     {
         public string Type { get; set; }
@@ -23,5 +28,10 @@ namespace qa_dotnet_cucumber.Config
     public class EnvironmentSettings
     {
         public string BaseUrl { get; set; }
+    }
+    public class LoginSettings
+    {
+        public string Username { get; set; }
+        public string Password { get; set; }
     }
 }
