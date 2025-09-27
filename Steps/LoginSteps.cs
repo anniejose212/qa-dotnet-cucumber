@@ -1,8 +1,9 @@
-using OpenQA.Selenium;
-using Reqnroll;
 using NUnit.Framework;
+using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
+using qa_dotnet_cucumber.Config;
 using qa_dotnet_cucumber.Pages;
+using Reqnroll;
 
 namespace qa_dotnet_cucumber.Steps
 {
@@ -11,6 +12,7 @@ namespace qa_dotnet_cucumber.Steps
     {
         private readonly LoginPage _loginPage;
         private readonly NavigationHelper _navigationHelper;
+        private readonly TestSettings _settings;
 
         public LoginSteps(LoginPage loginPage, NavigationHelper navigationHelper)
         {
@@ -64,7 +66,7 @@ namespace qa_dotnet_cucumber.Steps
             var d = _loginPage.Driver;
             var wait = new WebDriverWait(d, TimeSpan.FromSeconds(10));
 
-            // 1) Inline field prompts (empty/invalid input)
+            
             var emailPrompt = d.FindElements(By.XPath(
                 "//input[@type='email' or @placeholder='Email address' or @name='Email' or @id='email']" +
                 "/following-sibling::*[contains(@class,'prompt') and contains(@class,'red')]"
@@ -86,10 +88,9 @@ namespace qa_dotnet_cucumber.Steps
                     Assert.That(passPrompt.Text.Trim(),
                         Does.Match("at least 6|required|password").IgnoreCase,
                         $"Unexpected password error: '{passPrompt.Text}'");
-                return; // done
+                return; 
             }
 
-            // 2) Popup/toast (wrong password / invalid creds)
             var toast = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(
                 By.CssSelector(".ns-box.ns-show, .ui.error.message, .negative.message, .alert-danger, .validation-summary-errors")
             ));

@@ -67,6 +67,9 @@ namespace qa_dotnet_cucumber.Hooks
             _objectContainer.RegisterInstanceAs<IWebDriver>(driver);
             _objectContainer.RegisterInstanceAs(new NavigationHelper(driver));
             _objectContainer.RegisterInstanceAs(new LoginPage(driver));
+            _objectContainer.RegisterInstanceAs(new ProfileOverviewPage(driver));
+            _objectContainer.RegisterInstanceAs(new ProfileLanguagesSkillsPages(driver));
+            
 
             lock (_reportLock)
             {
@@ -106,7 +109,7 @@ namespace qa_dotnet_cucumber.Hooks
             driver?.Quit();
             Console.WriteLine($"Finished scenario on Thread {Thread.CurrentThread.ManagedThreadId} at {DateTime.Now}");
         }
-
+        
         [AfterTestRun]
         public static void AfterTestRun()
         {

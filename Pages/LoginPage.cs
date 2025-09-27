@@ -1,7 +1,6 @@
 using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
 using Reqnroll.BoDi;
-// MUST USE with ExpectedConditions
 using SeleniumExtras.WaitHelpers;
 using System.Numerics;
 
@@ -29,10 +28,10 @@ namespace qa_dotnet_cucumber.Pages
     
 
 
-        public LoginPage(IWebDriver driver) // Inject IWebDriver directly
+        public LoginPage(IWebDriver driver) 
         {
             _driver = driver;
-            _wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10)); // 10-second timeout
+            _wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10)); 
         }
         public void OpenSignIn()
         {
@@ -80,7 +79,7 @@ namespace qa_dotnet_cucumber.Pages
             try
             {
                 _wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(UsernameField));
-                return true; // username field visible ⇒ login modal/page is open
+                return true; 
             }
             catch { return false; }
         }
