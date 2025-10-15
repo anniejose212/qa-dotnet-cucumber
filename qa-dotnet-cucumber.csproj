@@ -9,6 +9,9 @@
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
+	<PropertyGroup>
+		<RunSettingsFilePath>parallel.runsettings</RunSettingsFilePath>
+	</PropertyGroup>
 
   <ItemGroup>
     <Compile Remove="Features\Features\**" />
@@ -52,5 +55,12 @@
   <ItemGroup>
     <Using Include="NUnit.Framework" />
   </ItemGroup>
+	
+	<ItemGroup>
+		<ReqnrollFeatureFiles Update="Features\ProfileLanguagesCRUD.feature">
+			<Generator>ReqnrollSingleFileGenerator</Generator>
+			<Generator Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'"></Generator>
+		</ReqnrollFeatureFiles>
+	</ItemGroup>
 
 </Project>

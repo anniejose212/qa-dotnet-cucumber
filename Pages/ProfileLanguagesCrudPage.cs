@@ -1,9 +1,13 @@
-﻿using OpenQA.Selenium;
-using OpenQA.Selenium.Support.UI;
-using SeleniumExtras.WaitHelpers;
+﻿// FILE: ProfileLanguagesCrudPage.cs
+// ROLE: POM for Languages tab — CRUD actions, toast accessors, and small helpers. 
+
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
+using System.Net;
+using OpenQA.Selenium;
+using OpenQA.Selenium.Support.UI;
+using SeleniumExtras.WaitHelpers;
+using static qa_dotnet_cucumber.Support.UiTextHelper;
 
 namespace qa_dotnet_cucumber.Pages
 {
@@ -12,113 +16,158 @@ namespace qa_dotnet_cucumber.Pages
         private readonly IWebDriver _driver;
         private readonly WebDriverWait _wait;
 
-        //  Toasts 
+        // Toasts
         private readonly By SuccessToastMessage = By.XPath("//div[contains(@class,'ns-box') and contains(@class,'ns-type-success')]");
+        private readonly By ErrorToastMessage = By.XPath("//div[contains(@class,'ns-box') and contains(@class,'ns-type-error')]");
 
-        // Languages controls 
-        private readonly By LanguagesPane = By.CssSelector("div[data-tab='first']");
+        // Languages controls
+        private readonly By LangInput = By.CssSelector("div[data-tab='first'] input[placeholder='Add Language']");
+        private readonly By LangLevelSelect = By.CssSelector("div[data-tab='first'] select[name='level']");
+        private readonly By LangAddNewBtn = By.XPath("//div[@data-tab='first']//div[contains(@class,'ui') and contains(@class,'button') and normalize-space(.)='Add New']");
+        private readonly By LangAddBtn = By.CssSelector("div[data-tab='first'] input.ui.teal.button[value='Add']");
         private readonly By LangRows = By.XPath("//div[@data-tab='first']//table//tbody/tr");
-        private readonly By LangAddNewBtn = By.XPath("//div[@data-tab='first']//div[normalize-space()='Add New']");
-        private readonly By LangInput = By.CssSelector("input[placeholder='Add Language']");
-        private readonly By LangLevelSelect = By.CssSelector("select.ui.dropdown[name='level']");
-        private readonly By LangAddBtn = By.CssSelector("div[data-tab='first'] input[value='Add']");
-        private readonly By LangUpdateBtn = By.CssSelector("div[data-tab='first'] input[value='Update']");
         private readonly By LangFirstRowEditIcon = By.XPath("//div[@data-tab='first']//table//tbody/tr[1]//i[contains(@class,'write icon')]");
-        private readonly By LangFirstRowDeleteIcon = By.XPath("//div[@data-tab='first']//table//tbody/tr[1]//i[contains(@class,'remove icon')]");
+        private readonly By RowDeleteIcon = By.CssSelector("i.remove.icon");
+        private readonly By LangUpdateBtn = By.CssSelector("div[data-tab='first'] input[value='Update']");
 
         public ProfileLanguagesCrudPage(IWebDriver driver)
         {
             _driver = driver;
-            _wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
-
+            _wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(5));
+            _wait.IgnoreExceptionTypes(typeof(NoSuchElementException), typeof(StaleElementReferenceException), typeof(UnhandledAlertException));
         }
 
-
-        // CREATE 
+        // Adds language (happy path)
         public void AddLanguage(string language, string level)
         {
-            _wait.Until(ExpectedConditions.ElementIsVisible(LanguagesPane));
-            _wait.Until(ExpectedConditions.ElementToBeClickable(LangAddNewBtn)).Click();
+            _driver.FindElement(LangAddNewBtn).Click();
+            _driver.FindElement(LangInput).Clear();
+            _driver.FindElement(LangInput).SendKeys(language);
 
-            var input = _wait.Until(ExpectedConditions.ElementIsVisible(LangInput));
-            input.Clear();
-            input.SendKeys(language);
-
-            var select = new SelectElement(_wait.Until(ExpectedConditions.ElementIsVisible(LangLevelSelect)));
+            var select = new SelectElement(_driver.FindElement(LangLevelSelect));
             select.SelectByText(level);
 
-            _wait.Until(ExpectedConditions.ElementToBeClickable(LangAddBtn)).Click();
+            _driver.FindElement(LangAddBtn).Click();
 
+            _wait.Until(ExpectedConditions.ElementIsVisible(SuccessToastMessage));
             WaitUntilLanguageAppears(language);
         }
 
-        // UPDATE 
-        public void EditLanguageLevel(string newLevel)
+        // Row DTO
+        public class LanguageItem
         {
-            var rows = _driver.FindElements(LangRows);
-            if (rows.Count == 0)
-                throw new Exception("No languages to edit.");
-
-            _wait.Until(ExpectedConditions.ElementToBeClickable(LangFirstRowEditIcon)).Click();
-            var input = _wait.Until(ExpectedConditions.ElementIsVisible(LangInput));
-            new SelectElement(_wait.Until(ExpectedConditions.ElementExists(LangLevelSelect))).SelectByText(newLevel);
-            _wait.Until(ExpectedConditions.ElementToBeClickable(LangUpdateBtn)).Click();
-            _wait.Until(ExpectedConditions.ElementIsVisible(SuccessToastMessage)); ;
+            public string Language { get; set; }
+            public string Level { get; set; }
         }
 
-        // DELETE
-        public void DeleteLanguage()
+        // Gets all languages
+        public List<LanguageItem> GetLanguages()
         {
-            _wait.Until(ExpectedConditions.ElementToBeClickable(LangFirstRowDeleteIcon)).Click();
-            _wait.Until(ExpectedConditions.ElementIsVisible(SuccessToastMessage));
-
-           
-        }
-
-        // READ 
-        public List<(string Language, string Level)> GetLanguages()
-        {
-
-            var languages = new List<(string Language, string Level)>();
-
-
+            List<LanguageItem> list = new();
             var rows = _driver.FindElements(LangRows);
-
 
             foreach (var row in rows)
             {
-
                 var cells = row.FindElements(By.TagName("td"));
 
-
-                string language = "";
-                string level = "";
-
+                LanguageItem item = new LanguageItem();
 
                 if (cells.Count > 0)
-                {
-                    language = cells[0].Text.Trim();
-                }
+                    item.Language = cells[0].Text.Trim();
 
                 if (cells.Count > 1)
-                {
-                    level = cells[1].Text.Trim();
-                }
+                    item.Level = cells[1].Text.Trim();
 
-
-                languages.Add((language, level));
+                list.Add(item);
             }
 
-
-            return languages;
+            return list;
         }
 
+        // Checks if 'Add New' button is visible
+        public bool IsAddNewButtonDisplayed()
+        {
+            foreach (var el in _driver.FindElements(LangAddNewBtn))
+                if (el.Displayed) return true;
+            return false;
+        }
+
+        // Edits first row language level
+        public void EditLanguageLevel(string language, string newLevel)
+        {
+            _driver.FindElement(LangFirstRowEditIcon).Click();
+            _driver.FindElement(LangInput).Clear();
+            _driver.FindElement(LangInput).SendKeys(language);
+
+            var select = new SelectElement(_driver.FindElement(LangLevelSelect));
+            select.SelectByText(newLevel);
+
+            _driver.FindElement(LangUpdateBtn).Click();
+            _wait.Until(ExpectedConditions.ElementIsVisible(SuccessToastMessage));
+        }
+
+        // Submits language without waits (XSS/negative)
+        public void SubmitLanguageRaw(string language, string level)
+        {
+            _driver.FindElement(LangAddNewBtn).Click();
+            _driver.FindElement(LangInput).Clear();
+            _driver.FindElement(LangInput).SendKeys(language);
+
+            new SelectElement(_driver.FindElement(LangLevelSelect)).SelectByText(level);
+            _driver.FindElement(LangAddBtn).Click();
+            // Intentionally no toast wait and no alert handling.
+        }
+
+        // Deletes specific language+level
+        public void Delete(string language, string level)
+        {
+            var rows = _driver.FindElements(LangRows);
+            foreach (var row in rows)
+            {
+                var cells = row.FindElements(By.TagName("td"));
+                if (cells.Count < 2) continue;
+
+                var langText = cells[0].Text.Trim();
+                var levelText = cells[1].Text.Trim();
+
+                if (EqNorm(langText, language) && EqNorm(levelText, level))
+                {
+                    var deleteIcon = row.FindElement(RowDeleteIcon);
+                    deleteIcon.Click();
+                    _wait.Until(ExpectedConditions.ElementIsVisible(SuccessToastMessage));
+                    break;
+                }
+            }
+        }
+
+        // Deletes all languages
+        public void DeleteAllLanguages()
+        {
+            while (true)
+            {
+                var rows = _driver.FindElements(LangRows);
+                if (rows.Count == 0) break;
+
+                try
+                {
+                    var deleteIcon = _wait.Until(ExpectedConditions.ElementToBeClickable(RowDeleteIcon));
+                    deleteIcon.Click();
+                    _wait.Until(ExpectedConditions.ElementIsVisible(SuccessToastMessage));
+                }
+                catch (WebDriverTimeoutException)
+                {
+                    break;
+                }
+            }
+        }
+
+        // Gets success toast text
         public string GetSuccessToastText()
         {
             try
             {
                 var el = _wait.Until(ExpectedConditions.ElementIsVisible(SuccessToastMessage));
-                return el.Text?.Trim() ?? "";
+                return el.Text.Trim();
             }
             catch
             {
@@ -126,21 +175,93 @@ namespace qa_dotnet_cucumber.Pages
             }
         }
 
-        // ---------------- Helpers ----------------
-        private void WaitUntilLanguageAppears(string language)
+        // Gets error toast text
+        public string GetErrorToastText()
         {
-            _wait.Until(_ =>
+            try
             {
-                var rows = _driver.FindElements(LangRows);
-                foreach (var r in rows)
+                var el = _wait.Until(ExpectedConditions.ElementIsVisible(ErrorToastMessage));
+                return el.Text.Trim();
+            }
+            catch
+            {
+                return "";
+            }
+        }
+
+        // Waits until language appears
+        public void WaitUntilLanguageAppears(string language)
+        {
+            _wait.Until(driver =>
+            {
+                foreach (var row in driver.FindElements(LangRows))
                 {
-                    var cells = r.FindElements(By.TagName("td"));
-                    if (cells.Count > 0 &&
-                        cells[0].Text.Trim().Equals(language.Trim(), StringComparison.OrdinalIgnoreCase))
+                    var cell = row.FindElement(By.TagName("td"));
+                    if (EqNorm(cell.Text, language))
                         return true;
                 }
                 return false;
             });
+        }
+
+        // Counts language with level
+        public int CountLanguageWithLevel(string language, string level)
+        {
+            int count = 0;
+            var rows = GetLanguages();
+
+            foreach (var row in rows)
+            {
+                if (EqNorm(row.Language, language) && EqNorm(row.Level, level))
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
+        // Selects level if exists
+        public bool SelectLevelIfExists(string levelText)
+        {
+            try
+            {
+                var select = new SelectElement(_driver.FindElement(LangLevelSelect));
+                select.SelectByText(levelText, true);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        // Adds language allowing invalid level
+        public bool AddLanguageAllowingInvalidLevel(string language, string level)
+        {
+            _driver.FindElement(LangAddNewBtn).Click();
+
+            _driver.FindElement(LangInput).Clear();
+            _driver.FindElement(LangInput).SendKeys(language);
+
+            bool levelSelected = SelectLevelIfExists(level);
+
+            _driver.FindElement(LangAddBtn).Click();
+
+            return levelSelected;
+        }
+
+        // Returns full languages summary
+        public string GetLanguagesDetails()
+        {
+            var rows = GetLanguages();
+            string details = "";
+            foreach (var r in rows)
+            {
+                if (details != "") details += ", ";
+                details += r.Language + ":" + r.Level;
+            }
+            return details;
         }
     }
 }

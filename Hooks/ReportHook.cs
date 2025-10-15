@@ -1,4 +1,7 @@
-﻿using System;
+﻿// FILE: ReportHook.cs
+// ROLE: ExtentReports lifecycle + per-step logging and screenshots. Minimal, thread-safe, DI-aware.
+
+using System;
 using System.IO;
 using System.Threading;
 using AventStack.ExtentReports;
@@ -7,13 +10,15 @@ using AventStack.ExtentReports.Reporter;
 using OpenQA.Selenium;
 using Reqnroll;
 using Reqnroll.BoDi;
+using System.Net; // for WebUtility.HtmlEncode
 
 namespace qa_dotnet_cucumber.Hooks
 {
     /// <summary>
     /// Minimal, focused reporting hook. Owns Extent lifecycle and step logging.
-    /// Keeps  existing Hooks.cs for WebDriver + DI.
+    /// Keeps existing Hooks.cs for WebDriver + DI.
     /// </summary>
+   
     [Binding]
     public class ReportHook
     {
@@ -24,7 +29,7 @@ namespace qa_dotnet_cucumber.Hooks
         private static ExtentSparkReporter? _spark;
         private static string _reportDir = string.Empty;  // absolute dir containing the html
         private static string _reportPath = string.Empty; // absolute html path
-
+        private static string HtmlSafe(string s) => WebUtility.HtmlEncode(s ?? string.Empty);
         // Per-context nodes (thread-safe)
         private static readonly AsyncLocal<ExtentTest?> _featureNode = new();
         private static readonly AsyncLocal<ExtentTest?> _scenarioNode = new();
@@ -42,19 +47,15 @@ namespace qa_dotnet_cucumber.Hooks
             var baseDir = AppContext.BaseDirectory; // .../bin/Debug/netX.Y/
             _reportDir = baseDir; // report folder in bin
 
-            
-            var settings = Hooks.Settings;
+            var settings = Hooks.WebDriverDIHook.Settings;
             var configured = (settings?.Report?.Path ?? "TestReport.html").Trim();
             var fileName = string.IsNullOrWhiteSpace(configured) ? "TestReport.html" : Path.GetFileName(configured);
 
-
             _reportPath = Path.Combine(_reportDir, fileName);
-
 
             _spark = new ExtentSparkReporter(_reportPath);
             _spark.Config.DocumentTitle = "QA .NET – Test Report";
             _spark.Config.ReportName = "UI E2E";
-
 
             _extent = new ExtentReports();
             _extent.AttachReporter(_spark);
@@ -67,7 +68,6 @@ namespace qa_dotnet_cucumber.Hooks
                     _extent.AddSystemInfo("Browser", settings.Browser.Type);
             }
 
-
             Console.WriteLine($"[REPORT] Writing to bin folder: {_reportPath}");
         }
 
@@ -78,7 +78,7 @@ namespace qa_dotnet_cucumber.Hooks
         {
             lock (_lock)
             {
-                _featureNode.Value = _extent!.CreateTest<Feature>(feature.FeatureInfo.Title);
+                _featureNode.Value = _extent!.CreateTest<Feature>(HtmlSafe(feature.FeatureInfo.Title));
             }
         }
 
@@ -87,8 +87,8 @@ namespace qa_dotnet_cucumber.Hooks
         {
             lock (_lock)
             {
-                var parent = _featureNode.Value ?? _extent!.CreateTest(scenario.ScenarioInfo.Title);
-                _scenarioNode.Value = parent.CreateNode<Scenario>(scenario.ScenarioInfo.Title);
+                var parent = _featureNode.Value ?? _extent!.CreateTest(HtmlSafe(scenario.ScenarioInfo.Title)); 
+                _scenarioNode.Value = parent.CreateNode<Scenario>(HtmlSafe(scenario.ScenarioInfo.Title));       
 
                 foreach (var tag in scenario.ScenarioInfo.Tags)
                     _scenarioNode.Value.AssignCategory(tag);
@@ -121,14 +121,16 @@ namespace qa_dotnet_cucumber.Hooks
         public void AfterStep(ScenarioContext scenario)
         {
             var text = scenario.StepContext.StepInfo.Text;
+            var safeText = HtmlSafe(text); // ✅ encode the title shown in the report
+
             var type = scenario.StepContext.StepInfo.StepDefinitionType;
 
             ExtentTest stepNode = type switch
             {
-                Reqnroll.Bindings.StepDefinitionType.Given => _scenarioNode.Value!.CreateNode<Given>(text),
-                Reqnroll.Bindings.StepDefinitionType.When => _scenarioNode.Value!.CreateNode<When>(text),
-                Reqnroll.Bindings.StepDefinitionType.Then => _scenarioNode.Value!.CreateNode<Then>(text),
-                _ => _scenarioNode.Value!.CreateNode<And>(text)
+                Reqnroll.Bindings.StepDefinitionType.Given => _scenarioNode.Value!.CreateNode<Given>(safeText),
+                Reqnroll.Bindings.StepDefinitionType.When => _scenarioNode.Value!.CreateNode<When>(safeText),
+                Reqnroll.Bindings.StepDefinitionType.Then => _scenarioNode.Value!.CreateNode<Then>(safeText),
+                _ => _scenarioNode.Value!.CreateNode<And>(safeText)
             };
 
             // Flush buffered Info logs from step classes into this step node
@@ -166,7 +168,21 @@ namespace qa_dotnet_cucumber.Hooks
             lock (_lock)
             {
                 Console.WriteLine($"[REPORT] Flushing: {_reportPath}");
-                _extent?.Flush();
+                try
+                {
+                    _extent?.Flush();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[REPORT] Flush failed: {ex.Message}");
+                }
+                finally
+                {
+                    _spark = null;
+                    _extent = null;
+                    GC.Collect();
+                    GC.WaitForPendingFinalizers();
+                }
             }
         }
 
@@ -177,14 +193,13 @@ namespace qa_dotnet_cucumber.Hooks
             var screens = Path.Combine(baseDir, "Screenshots");
             Directory.CreateDirectory(screens);
 
-
             var file = $"SCR_{Sanitize(stepText)}_{DateTime.UtcNow:yyyyMMdd_HHmmss_fff}_{Thread.CurrentThread.ManagedThreadId}.png";
             return Path.Combine(screens, file);
         }
 
         private static string Sanitize(string s)
         {
-            foreach (var c in System.IO.Path.GetInvalidFileNameChars())
+            foreach (var c in Path.GetInvalidFileNameChars())
                 s = s.Replace(c, '_');
             return s.Length > 60 ? s.Substring(0, 60) : s;
         }
@@ -204,11 +219,11 @@ namespace qa_dotnet_cucumber.Hooks
                 if (logs != null && logs.Count > 0)
                 {
                     foreach (var line in logs)
-                        node.Info(line);
+                        node.Info(HtmlSafe(line));  
                     (obj as dynamic).ClearLogs();
                 }
             }
-            catch { /* not all step classes are in every scenario */ }
+            catch {/* not all step classes are in every scenario */  }
         }
     }
 }

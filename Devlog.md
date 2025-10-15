@@ -1,3 +1,72 @@
+Dev Log
+
+Task-level history. Newest first.
+
+2025-10-15 — Refactor: Profile CRUD Cleanup + Reporting Split
+
+Reduced POM comments to one-liners; no logic changes.
+
+Added/standardized helpers:
+
+UiTextHelper for HTML-decode + case-insensitive equality.
+
+TestDataHelper for {DQ} and {EQ:n} decoding.
+
+Hardened negative/XSS flows:
+
+SubmitLanguageRaw / SubmitSkillRaw to avoid suppressing alerts.
+
+AddLanguageAllowingInvalidLevel / AddSkillAllowingInvalidLevel to detect dropdown vs server validation.
+
+Cleanup discipline:
+
+ProfileDataCleanupHooks deletes scenario inserts using steps.Added; fallback wipe on failure.
+
+Skills steps parity fix: added _invalidLevelExistedInDropdown field to match Languages steps.
+
+Created branch refactor/profile-crud-cleanup from feature/profile-feature-files.
+
+Earlier — Profile Features (Languages & Skills)
+
+Pages: Full CRUD for Languages and Skills, with explicit waits and toast checks.
+
+Steps: Presence/absence/count assertions; step trackers for teardown; open Skills tab explicitly.
+
+Features: ProfileLanguagesCRUD.feature, ProfileSkillsCRUD.feature aligned in structure.
+
+Determinism: Wait-until-appears helpers for post-action stability.
+
+Earlier — Login Suite
+
+LoginPage: OpenSignIn() flow; resilient locators for email/password; success probe via “Sign Out”.
+
+Steps: Positive login + negatives (invalid user, invalid pass, empty, whitespace, repeated failures).
+
+Feature: Login.feature with @smoke, @negative, @desiredbehaviour tags.
+
+Environment & Config
+
+Base URL configured in settings.json / config.cs.
+
+Driver and timeouts configured in DI hook; window maximize on sign-in open.
+
+Tag strategy in features: @smoke, @negative, @currentbehaviour, @desiredbehaviour.
+
+Backlog
+
+GitHub Actions to publish Extent HTML as an artifact.
+
+Secrets-based credentials; remove hard-coded examples from steps.
+
+Retry attribute for known flaky UI areas.
+
+Cross-browser matrix via runsettings.
+
+Expand Profile Overview coverage beyond name edit.
+
+
+
+September 29, 2025
 
 🔑 Migration Notes – From Hooks.cs to ReportHook.cs
 
