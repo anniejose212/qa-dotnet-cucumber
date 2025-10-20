@@ -1,199 +1,135 @@
-# QA-DotNet-Cucumber Framework
+Profile & Login Automation (C# + Selenium + Reqnroll)
 
-A .NET-based test automation framework using Reqnroll (Cucumber for .NET), Selenium WebDriver, and NUnit. This framework
-is designed to test web applications with a clean, maintainable structure.
+UI test automation for Login and Profile CRUD (Overview, Languages, Skills). Clean Page Objects, resilient waits, deterministic cleanup, and Extent HTML reporting. Built to showcase QA engineering quality to portfolio reviewers.
 
-## Overview
+Tech Stack
 
-This framework provides automated functional testing for web applications with the following features:
+Language: C#
 
-- **Reqnroll**: Implements Cucumber's Gherkin syntax for readable tests
-- **Selenium WebDriver**: Handles browser interactions
-- **NUnit**: Manages test execution and assertions
-- **ExtentReports**: Generates HTML test reports
-- **Page Object Model (POM)**: Separates test logic from page interactions
+Runner: NUnit
 
-## Prerequisites
+BDD: Reqnroll (SpecFlow-compatible)
 
-- **.NET SDK**: Version 8.0 or higher (install from [dotnet.microsoft.com](https://dotnet.microsoft.com))
-- **IDE**: Visual Studio Code or Visual Studio (recommended)
-- **Chrome Browser**: Required for Selenium WebDriver (ChromeDriver version must match your browser version via
-  WebDriverManager)
+Automation: Selenium WebDriver
 
-## Project Structure
+Pattern: Page Object Model (POM)
 
-```
-├── Features/           # Gherkin feature files
-├── Steps/              # C# step implementations
-├── Pages/              # Page Object Model classes
-├── Hooks/              # Setup and teardown logic
-├── Config/             # Configuration classes
-├── Tests/              # NUnit test runner
-└── settings.json       # Configuration file
-```
+Reporting: ExtentReports (HTML)
 
-## Getting Started
+Project Structure
+qa-dotnet-cucumber/
+├─ Config/
+│  └─ config.cs
+├─ Features/
+│  ├─ Login.feature
+│  ├─ ProfileLanguagesCRUD.feature
+│  └─ ProfileSkillsCRUD.feature
+├─ Hooks/
+│  ├─ ProfileDataCleanupHooks.cs   # data hygiene before/after scenarios
+│  ├─ ReportHook.cs                # Extent report + screenshots
+│  └─ WebDriverDIHook.cs           # driver init + DI container
+├─ Pages/
+│  ├─ LoginPage.cs
+│  ├─ ProfileLanguagesCrudPage.cs
+│  ├─ ProfileOverviewPage.cs
+│  └─ ProfileSkillsCrudPage.cs
+├─ Steps/
+│  ├─ AuthSteps.cs
+│  ├─ LoginSteps.cs
+│  ├─ ProfileLanguagesCrudSteps.cs
+│  └─ ProfileSkillsCrudSteps.cs
+├─ Support/
+│  ├─ AlertHelpers.cs
+│  ├─ AuthHelper.cs
+│  ├─ NavigationHelper.cs
+│  ├─ StepBase.cs
+│  ├─ TestDataHelper.cs            # {DQ} and {EQ:n} decoding for payloads
+│  └─ UiTextHelper.cs              # HTML-decode + case-insensitive compare
+├─ Tests/
+│  └─ CucumberRunner.cs
+├─ Devlog.md
+├─ readme.md
+├─ reqnroll.json
+├─ settings.json
+├─ parallel.runsettings
 
-### Installation
 
-1. Clone the repository:
-   ```bash
-   git clone <repository-url>
-   cd qa-dotnet-cucumber
-   ```
+Coverage
+Login
 
-2. Restore dependencies:
-   ```bash
-   dotnet restore
-   ```
+Valid login.
 
-### Configuration
+Invalid username, invalid password, empty credentials.
 
-1. Configure `settings.json` in the project root:
-   ```json
-   {
-     "Browser": {
-       "Type": "Chrome",
-       "Headless": false,
-       "TimeoutSeconds": 30
-     },
-     "Report": {
-       "Path": "TestReport.html",
-       "Title": "Test Automation Report"
-     },
-     "Environment": {
-       "BaseUrl": "http://the-internet.herokuapp.com" 
-     }
-   }
-   ```
-   Note: Update `BaseUrl` to match your test environment.
+Whitespace around credentials.
 
-### Running Tests
+Repeated failures with optional cooldown lockout check.
 
-1. Execute tests:
-   ```bash
-   dotnet test
-   ```
+Assertions read inline prompts and popup toasts.
 
-2. View results:
-    - Open `TestReport.html` in your browser to see the test report
+Profile: Languages
 
-## Writing Tests
+Add, edit, delete, and list with level dropdown.
 
-### Feature Files (Gherkin)
+Success toasts and table assertions.
 
-Create feature files in the `Features/` directory:
+Negative/XSS: raw submit path to avoid masking alerts.
 
-```gherkin
-Feature: Login Functionality
-As a user, I want to log in to access restricted content.
+Deterministic cleanup via hooks.
 
-Scenario: Perform a successful login
-  Given I am on the login page
-  When I enter valid credentials
-  Then I should see the secure area
-```
+Profile: Skills
 
-### Step Definitions
+Add, edit, delete, and list on Skills tab.
 
-Implement steps in `StepDefinitions/`:
+Success toasts and table assertions.
 
-```csharp
-[Binding]
-public class LoginSteps
-{
-    private readonly LoginPage _loginPage;
-    private readonly NavigationHelper _navigationHelper;
+Negative/XSS: raw submit path.
 
-    public LoginSteps(LoginPage loginPage, NavigationHelper navigationHelper)
-    {
-        _loginPage = loginPage;
-        _navigationHelper = navigationHelper;
-    }
+Deterministic cleanup via hooks.
 
-    [Given("I am on the login page")]
-    public void GivenIAmOnTheLoginPage()
-    {
-        _navigationHelper.NavigateTo("/login");
-    }
+Setup
+Prereqs
 
-    [When("I enter valid credentials")]
-    public void WhenIEnterValidCredentials()
-    {
-        _loginPage.Login("tomsmith", "SuperSecretPassword!");
-    }
+.NET 8 SDK+
 
-    [Then("I should see the secure area")]
-    public void ThenIShouldSeeTheSecureArea()
-    {
-        var successMessage = _loginPage.GetSuccessMessage();
-        Assert.That(successMessage, Does.Contain("You logged into a secure area!"));
-    }
-}
-```
+Chrome + matching ChromeDriver on PATH (or adjust driver in DI hook)
 
-### Page Object Model
+Local site running at the base URL configured in settings.json or config.cs
 
-Create page classes in `Pages/`:
+Restore
+dotnet restore
 
-```csharp
-public class LoginPage
-{
-    private readonly IWebDriver _driver;
-    private readonly By UsernameField = By.Id("username");
-    private readonly By PasswordField = By.Id("password");
-    private readonly By LoginButton = By.CssSelector("button[type='submit']");
-    private readonly By SuccessMessage = By.CssSelector(".flash.success");
+Run
+All tests
+dotnet test
 
-    public LoginPage(IWebDriver driver)
-    {
-        _driver = driver;
-    }
+By tag
+dotnet test --filter TestCategory=smoke
+dotnet test --filter TestCategory=negative
 
-    public void Login(string username, string password)
-    {
-        _driver.FindElement(UsernameField).SendKeys(username);
-        _driver.FindElement(PasswordField).SendKeys(password);
-        _driver.FindElement(LoginButton).Click();
-    }
+Parallel (if enabled by parallel.runsettings)
+dotnet test --settings parallel.runsettings
 
-    public string GetSuccessMessage()
-    {
-        return _driver.FindElement(SuccessMessage).Text;
-    }
-}
-```
+Reporting
 
-## Configuration Options
+ReportHook.cs writes an Extent HTML report to the test output folder, and the project may keep a convenience copy as TestReport.html.
 
-- **Browser Settings**:
-    - `Type`: Currently supports "Chrome"
-    - `Headless`: Set to `true` for headless execution
-    - `TimeoutSeconds`: Default wait timeout
+On failure, screenshots are saved under the test output (e.g., bin/Debug/net8.0/Screenshots/SCR_<step>_<timestamp>.png) and attached to the failing step node.
 
-- **Report Settings**:
-    - `Path`: Output report filename
-    - `Title`: Report title
+Data Hygiene
 
-- **Environment Settings**:
-    - `BaseUrl`: Target application URL
+ProfileDataCleanupHooks wipes Languages/Skills before scenarios tagged @languages or @skills.
 
-## Best Practices
+After each scenario, it deletes only rows recorded by the step trackers; falls back to full wipe if no tracker is available.
 
-1. **Adding New Tests**:
-    - Write a new `.feature` file
-    - Implement steps in a new or existing step definition class
-    - Follow the Page Object Model pattern
+Security & Negative Testing
 
-2. **Debugging**:
-    - Use IDE breakpoints in step definitions or page objects
-    - Check the HTML report for test execution details
+Raw submit methods bypass toast waits to expose alerts or server-side validation issues.
 
-3. **Extending the Framework**:
-    - Add new page classes for different parts of the application
-    - Keep page objects focused and maintainable
-    - Follow the Single Responsibility Principle
+TestDataHelper decodes tokens:
 
-## Support
+{DQ} → "
 
-For additional help or questions, please reach out to the team or create an issue in the repository.
+{EQ:n} → repeated = n times
+
+UiTextHelper normalizes HTML and casing for stable assertions.

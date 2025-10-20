@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -9,6 +9,17 @@
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
+	<PropertyGroup>
+		<RunSettingsFilePath>parallel.runsettings</RunSettingsFilePath>
+	</PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Features\Features\**" />
+    <EmbeddedResource Remove="Features\Features\**" />
+    <None Remove="Features\Features\**" />
+    <ReqnrollFeatureFiles Remove="Features\Features\**" />
+    <ReqnrollObsoleteCodeBehindFiles Remove="Features\Features\**" />
+  </ItemGroup>
   <ItemGroup>
     <None Update="parallel.runsettings">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -29,6 +40,7 @@
     <PackageReference Include="DotNetSeleniumExtras.WaitHelpers" Version="3.11.0" />
     <PackageReference Include="ExtentReports" Version="5.0.4" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.9" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.13.0" />
     <PackageReference Include="NUnit" Version="4.3.2" />
     <PackageReference Include="NUnit.Analyzers" Version="3.9.0" />
@@ -43,9 +55,12 @@
   <ItemGroup>
     <Using Include="NUnit.Framework" />
   </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Features\Features\" />
-  </ItemGroup>
+	
+	<ItemGroup>
+		<ReqnrollFeatureFiles Update="Features\ProfileLanguagesCRUD.feature">
+			<Generator>ReqnrollSingleFileGenerator</Generator>
+			<Generator Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'"></Generator>
+		</ReqnrollFeatureFiles>
+	</ItemGroup>
 
 </Project>

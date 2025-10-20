@@ -1,6 +1,9 @@
+// FILE: NavigationHelper.cs
+// ROLE: Thin navigation wrapper for composing absolute URLs via test settings.
+
 using OpenQA.Selenium;
 
-namespace qa_dotnet_cucumber.Pages
+namespace qa_dotnet_cucumber.Support
 {
     public class NavigationHelper
     {
@@ -13,7 +16,7 @@ namespace qa_dotnet_cucumber.Pages
 
         public void NavigateTo(string urlPath)
         {
-            _driver.Navigate().GoToUrl(Hooks.Hooks.Settings.Environment.BaseUrl + urlPath);
+            _driver.Navigate().GoToUrl(Hooks.WebDriverDIHook.Settings.Environment.BaseUrl + urlPath);
         }
     }
 }

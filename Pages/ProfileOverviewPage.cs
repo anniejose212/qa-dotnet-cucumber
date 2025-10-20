@@ -14,12 +14,13 @@ namespace qa_dotnet_cucumber.Pages
         private readonly IWebDriver _driver;
         private readonly WebDriverWait _wait;
 
-        // --- Common / Header ---
+        //Common / Header 
         private readonly By NavProfileHeader = By.XPath("//a[@class='item' and normalize-space()='Profile']");
         private readonly By SuccessToastMessage = By.XPath("//div[contains(@class,'ns-box') and contains(@class,'ns-type-success')]");
         private readonly By ErrorToastMessage = By.XPath("//div[contains(@class,'ns-box') and contains(@class,'ns-type-error')]");
+        private readonly By DescriptionAnchor = By.XPath("//*[normalize-space()='Description']");
 
-        // --- Basic Info ---
+        //  Basic Info
         private readonly By NameDropdownToggle = By.CssSelector("div.ui.dropdown i.dropdown.icon");
         private readonly By NameFirstInput = By.CssSelector("input[name='firstName']");
         private readonly By NameLastInput = By.CssSelector("input[name='lastName']");
@@ -33,7 +34,12 @@ namespace qa_dotnet_cucumber.Pages
             _wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
 
         }
-
+        public void OpenProfile()
+        {
+            _wait.Until(ExpectedConditions.ElementToBeClickable(NavProfileHeader)).Click();
+            
+            _wait.Until(ExpectedConditions.ElementIsVisible(DescriptionAnchor));
+        }
         public void WaitForLoaded() => _wait.Until(ExpectedConditions.ElementIsVisible(NavProfileHeader));
 
         // ---------- Displaying Profile Information ----------
