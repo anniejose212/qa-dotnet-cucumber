@@ -16,6 +16,7 @@ Pattern: Page Object Model (POM)
 
 Reporting: ExtentReports (HTML)
 
+````
 Project Structure
 qa-dotnet-cucumber/
 ├─ Config/
@@ -52,7 +53,7 @@ qa-dotnet-cucumber/
 ├─ reqnroll.json
 ├─ settings.json
 ├─ parallel.runsettings
-
+```
 
 Coverage
 Login
